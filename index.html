@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotación de Pediatría · Registro y notas</title>
+<style>
+:root{
+  --ink:#14213d; --teal:#0f766e; --teal-d:#0b5a54; --bg:#f3f6f8; --card:#fff; --line:#dde3ea;
+  --muted:#667386; --warn:#b45309; --ok:#15803d; --danger:#b91c1c; --soft:#eaf5f4;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+header.top{background:var(--ink);color:#fff;padding:14px 20px}
+header.top .in{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header.top b{font-size:16px}
+header.top span{opacity:.75;font-size:13px}
+main{max-width:760px;margin:24px auto;padding:0 16px}
+main.wide{max-width:1200px}
+footer{max-width:1200px;margin:30px auto;padding:0 16px;font-size:12px;color:var(--muted);text-align:center}
+footer a{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(20,33,61,.04)}
+h1{font-size:21px;margin:0 0 4px}
+h2{font-size:16px;margin:22px 0 10px}
+p.sub{color:var(--muted);margin:0 0 18px}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+input[type=text],input[type=email],input[type=password],input[type=date],select{
+  width:100%;padding:9px 11px;border:1px solid #c5ced8;border-radius:8px;font:inherit;background:#fff;color:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+.grid{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+.grid .full{grid-column:1/-1}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.rot{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.rot-head{display:flex;align-items:center;gap:10px;padding:11px 14px;margin:0;font-size:15px;cursor:pointer;background:#fafbfc}
+.rot-head input{width:18px;height:18px;accent-color:var(--teal)}
+.rot.on{border-color:var(--teal)}
+.rot.on .rot-head{background:var(--soft)}
+.rot-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:12px 14px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid transparent;padding:9px 16px;font-weight:600}
+.btn{background:var(--teal);color:#fff}
+.btn:hover{background:var(--teal-d)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn2{background:#fff;border-color:#c5ced8;color:var(--ink)}
+.btn2:hover{background:#f1f4f7}
+.btn-sm{padding:5px 10px;font-size:13px}
+.link{background:none;border:0;color:var(--teal);padding:2px 6px;font-weight:600}
+.link.red{color:var(--danger)}
+.errors{background:#fdf0ef;border:1px solid #f1c3bf;color:#8a1c14;border-radius:8px;padding:10px 14px;margin:16px 0;font-size:14px}
+.errors ul{margin:0;padding-left:18px}
+.note{font-size:12px;color:var(--muted);margin-top:12px}
+.ok-card{text-align:center;padding:34px 22px}
+.ok-card .tick{width:54px;height:54px;border-radius:50%;background:var(--soft);color:var(--teal);display:grid;place-items:center;font-size:28px;margin:0 auto 12px}
+.banner{background:#fff7e6;border:1px solid #f3d9a0;color:#7a4b00;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar input[type=text]{max-width:260px}
+.toolbar select{width:auto}
+.toolbar .sp{flex:1}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:13px}
+.chip b{font-size:18px;display:block;line-height:1.2}
+.tablewrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:#fafbfc;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.c,th.c{text-align:center}
+.who b{display:block}
+.who small,.dates{color:var(--muted);font-size:12px}
+.dates{display:block;margin-top:2px;white-space:nowrap}
+.nota-in{width:72px;text-align:center;font-weight:600;padding:6px 4px}
+.na{color:#b4bcc7}
+.avg{font-size:17px;text-align:center;white-space:nowrap}
+.avg .partial{color:var(--warn);font-size:15px}
+.avg small{display:block;font-size:11px;font-weight:400;color:var(--warn)}
+.dup{display:inline-block;background:#fff1d6;color:#8a5a00;border-radius:6px;font-size:11px;padding:1px 6px;margin-left:6px;font-weight:600}
+.empty{padding:36px;text-align:center;color:var(--muted)}
+dialog{border:0;border-radius:14px;padding:0;max-width:680px;width:calc(100% - 24px);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(20,33,61,.45)}
+dialog form{padding:22px}
+.dlg-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;max-width:90%}
+.toast.err{background:var(--danger)}
+.printonly{display:none}
+@media print{
+  body{background:#fff}
+  .noprint,header.top,footer{display:none!important}
+  .printonly{display:block!important;margin-bottom:10px}
+  main.wide{max-width:none;margin:0;padding:0}
+  .tablewrap{border:0;overflow:visible}
+  table{min-width:0;font-size:11px}
+  th,td{padding:5px 6px}
+  .nota-in{border:0;background:none;width:auto;padding:0}
+  @page{size:landscape;margin:12mm}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="in"><b>Rotación de Pediatría</b><span>Hospital Regional de Zipaquirá</span></div></header>
+<main id="app"></main>
+<footer id="foot"></footer>
+<div id="toast" class="toast" hidden></div>
+
+<script type="module">
+/* ============================================================
+   CONFIGURACIÓN
+   Pega aquí los datos de tu proyecto de Firebase (Realtime Database + Authentication).
+   Mientras esté vacío, la página funciona en MODO DEMOSTRACIÓN (los datos se guardan solo en este navegador).
+   Reglas de seguridad: ver el archivo reglas-firebase.json
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  appId: ""
+};
+
+const ROTS = [
+  {key:'urgencias',        label:'Urgencias'},
+  {key:'hospitalizacion',  label:'Hospitalización'},
+  {key:'consulta_externa', label:'Consulta externa'},
+  {key:'neonatal',         label:'Unidad neonatal'}
+];
+const UNIS = ['Universidad de La Sabana','Universidad El Bosque','Pontificia Universidad Javeriana','Universidad de los Andes'];
+const DEMO = !FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.databaseURL;
+
+/* ---------- utilidades ---------- */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = iso=>{ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; };
+const r2 = n=>Math.round(n*100+1e-9)/100;
+const fmtNum = n=>n==null?'':r2(n).toFixed(2).replace('.',',');
+const norm = s=>String(s||'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
+const app = $('#app');
+let toastT;
+function toast(msg,err){ const t=$('#toast'); t.textContent=msg; t.className='toast'+(err?' err':''); t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,3500); }
+
+function parseNota(s){
+  s=String(s??'').trim().replace(',','.');
+  if(s==='') return null;
+  const n=Number(s);
+  return (isFinite(n)&&n>=0&&n<=5)?n:NaN;
+}
+function calc(e){
+  const r=e.rotaciones||{};
+  const done=ROTS.filter(x=>r[x.key]);
+  const graded=done.filter(x=>typeof r[x.key].nota==='number');
+  const sum=graded.reduce((a,x)=>a+r[x.key].nota,0);
+  return {done:done.length, graded:graded.length, avg:graded.length?sum/graded.length:null, complete:done.length>0&&graded.length===done.length};
+}
+function avgHTML(c){
+  if(c.avg==null) return '<span class="na">—</span>';
+  if(c.complete) return `<b>${fmtNum(c.avg)}</b>`;
+  return `<span class="partial">${fmtNum(c.avg)}<small>parcial ${c.graded}/${c.done}</small></span>`;
+}
+
+/* ---------- almacenamiento (Firebase o demostración local) ---------- */
+let store;
+async function initStore(){
+  if(store) return store;
+  if(DEMO){
+    const LS='notas_rotacion_demo_v1'; let mem={}; const subs=new Set();
+    const read=()=>{ try{ return JSON.parse(localStorage.getItem(LS)||'{}'); }catch{ return JSON.parse(JSON.stringify(mem)); } };
+    const write=o=>{ mem=o; try{ localStorage.setItem(LS,JSON.stringify(o)); }catch{} subs.forEach(f=>f(read())); };
+    store={
+      demo:true,
+      subscribe(cb){ subs.add(cb); cb(read()); return ()=>subs.delete(cb); },
+      async create(o){ const d=read(); d['d'+Date.now()+Math.random().toString(36).slice(2,6)]={...o,creado:Date.now()}; write(d); },
+      async replace(id,o){ const d=read(); d[id]=o; write(d); },
+      async setNota(id,rot,v){ const d=read(); const x=d[id]?.rotaciones?.[rot]; if(!x) return; if(v==null) delete x.nota; else x.nota=v; write(d); },
+      async remove(id){ const d=read(); delete d[id]; write(d); },
+      auth:{ onChange(cb){ cb({email:'demo'}); return ()=>{}; }, async signIn(){}, async signOut(){} }
+    };
+  } else {
+    const V='10.12.2', base=`https://www.gstatic.com/firebasejs/${V}/`;
+    const [A,D,U]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-database.js'),import(base+'firebase-auth.js')]);
+    const fb=A.initializeApp(FIREBASE_CONFIG), db=D.getDatabase(fb), au=U.getAuth(fb);
+    const root=D.ref(db,'estudiantes');
+    const withTimeout=p=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))]);
+    store={
+      demo:false,
+      subscribe(cb,onErr){ return D.onValue(root,s=>cb(s.val()||{}),e=>onErr&&onErr(e)); },
+      create(o){ return withTimeout(D.set(D.push(root),{...o,creado:D.serverTimestamp()})); },
+      replace(id,o){ return withTimeout(D.set(D.ref(db,'estudiantes/'+id),o)); },
+      setNota(id,rot,v){ return withTimeout(D.set(D.ref(db,`estudiantes/${id}/rotaciones/${rot}/nota`),v)); },
+      remove(id){ return withTimeout(D.remove(D.ref(db,'estudiantes/'+id))); },
+      auth:{
+        onChange(cb){ return U.onAuthStateChanged(au,cb); },
+        signIn(e,p){ return U.signInWithEmailAndPassword(au,e,p); },
+        signOut(){ return U.signOut(au); }
+      }
+    };
+  }
+  return store;
+}
+
+/* ---------- formulario (compartido: estudiante y profesor) ---------- */
+function formFields(withNotas,v={}){
+  const r=v.rotaciones||{};
+  const uni=v.universidad||'';
+  const isOther=uni && !UNIS.includes(uni);
+  return `
+  <div class="grid">
+    <div class="full"><label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" autocomplete="name" value="${esc(v.nombre)}" maxlength="150"></div>
+    <div><label for="documento">Número de documento</label>
+      <input type="text" id="documento" name="documento" inputmode="numeric" value="${esc(v.documento)}" maxlength="20"></div>
+    <div><label for="correo">Correo electrónico <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+      <input type="email" id="correo" name="correo" autocomplete="email" value="${esc(v.correo)}" maxlength="150"></div>
+    <div><label for="universidad">Universidad</label>
+      <select id="universidad" name="universidad">
+        <option value="">Selecciona…</option>
+        ${UNIS.map(u=>`<option ${u===uni?'selected':''}>${esc(u)}</option>`).join('')}
+        <option value="__otra" ${isOther?'selected':''}>Otra</option>
+      </select></div>
+    <div><label for="periodo">Periodo académico <span style="font-weight:400;color:var(--muted)">(ej. 2026-2)</span></label>
+      <input type="text" id="periodo" name="periodo" value="${esc(v.periodo)}" maxlength="20"></div>
+    <div class="full" id="otraWrap" ${isOther?'':'hidden'}><label for="uniOtra">¿Cuál universidad?</label>
+      <input type="text" id="uniOtra" name="uniOtra" value="${isOther?esc(uni):''}" maxlength="100"></div>
+  </div>
+  <h2>Rotaciones realizadas</h2>
+  <p class="sub" style="margin-bottom:10px">Marca cada servicio por el que rotaste e indica las fechas de inicio y fin.</p>
+  ${ROTS.map(x=>{ const on=!!r[x.key]; const o=r[x.key]||{}; return `
+  <div class="rot ${on?'on':''}" data-rot="${x.key}">
+    <label class="rot-head"><input type="checkbox" name="rot_${x.key}" ${on?'checked':''}> ${x.label}</label>
+    <div class="rot-body" ${on?'':'hidden'}>
+      <div><label>Fecha de inicio</label><input type="date" name="ini_${x.key}" value="${esc(o.inicio)}"></div>
+      <div><label>Fecha de fin</label><input type="date" name="fin_${x.key}" value="${esc(o.fin)}"></div>
+      ${withNotas?`<div><label>Nota (0 – 5)</label><input type="text" inputmode="decimal" name="nota_${x.key}" value="${typeof o.nota==='number'?fmtNum(o.nota):''}" placeholder="—"></div>`:''}
+    </div>
+  </div>`; }).join('')}`;
+}
+function bindFormFields(form){
+  $('#universidad',form).addEventListener('change',e=>{ $('#otraWrap',form).hidden=e.target.value!=='__otra'; });
+  $$('.rot',form).forEach(box=>{
+    const cb=$('input[type=checkbox]',box);
+    cb.addEventListener('change',()=>{ box.classList.toggle('on',cb.checked); $('.rot-body',box).hidden=!cb.checked; });
+  });
+}
+function readForm(form,withNotas){
+  const fd=new FormData(form), g=k=>String(fd.get(k)||'').trim(), errors=[];
+  const nombre=g('nombre').replace(/\s+/g,' ');
+  if(nombre.length<3) errors.push('Escribe tu nombre completo.');
+  const documento=g('documento').replace(/[.\s]/g,'');
+  if(!/^[A-Za-z0-9]{5,20}$/.test(documento)) errors.push('Revisa el número de documento (solo letras y números, sin puntos).');
+  const correo=g('correo');
+  if(correo && !/^\S+@\S+\.\S+$/.test(correo)) errors.push('El correo electrónico no parece válido.');
+  let universidad=g('universidad');
+  if(universidad==='__otra') universidad=g('uniOtra');
+  if(!universidad) errors.push('Indica tu universidad.');
+  const periodo=g('periodo');
+  if(!periodo) errors.push('Indica el periodo académico (ej. 2026-2).');
+  const rotaciones={};
+  for(const x of ROTS){
+    if(!fd.get('rot_'+x.key)) continue;
+    const ini=g('ini_'+x.key), fin=g('fin_'+x.key);
+    if(!ini||!fin){ errors.push(`${x.label}: completa las fechas de inicio y fin.`); continue; }
+    if(fin<ini){ errors.push(`${x.label}: la fecha de fin es anterior a la de inicio.`); continue; }
+    const o={inicio:ini,fin};
+    if(withNotas){
+      const n=parseNota(g('nota_'+x.key));
+      if(Number.isNaN(n)) errors.push(`${x.label}: la nota debe estar entre 0 y 5.`);
+      else if(n!==null) o.nota=n;
+    }
+    rotaciones[x.key]=o;
+  }
+  if(!Object.keys(rotaciones).length) errors.push('Marca al menos una rotación.');
+  return {errors,data:{nombre,documento,universidad,periodo,correo,rotaciones}};
+}
+
+/* ---------- vista del estudiante ---------- */
+function viewStudent(){
+  app.className=''; $('#foot').innerHTML='<a href="#profesor">Acceso profesor</a>';
+  app.innerHTML=`
+  ${DEMO?'<div class="banner"><b>Modo demostración:</b> los datos se guardan solo en este navegador. Configura Firebase para recibir respuestas reales.</div>':''}
+  <section class="card">
+    <h1>Registro de rotaciones</h1>
+    <p class="sub">Completa tus datos y las rotaciones que realizaste en el Hospital Regional. Tu profesor registrará tus notas.</p>
+    <form id="f" novalidate>
+      ${formFields(false)}
+      <div id="errs" class="errors" hidden></div>
+      <button class="btn" id="send" type="submit" style="margin-top:18px;width:100%">Enviar</button>
+      <p class="note">Estos datos se usan únicamente para elaborar el reporte de notas de la rotación.</p>
+    </form>
+  </section>`;
+  const form=$('#f'); bindFormFields(form);
+  form.addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const {errors,data}=readForm(form,false), box=$('#errs');
+    if(errors.length){ box.innerHTML='<ul>'+errors.map(e=>`<li>${esc(e)}</li>`).join('')+'</ul>'; box.hidden=false; box.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+    box.hidden=true;
+    const btn=$('#send'); btn.disabled=true; btn.textContent='Enviando…';
+    try{
+      await (await initStore()).create(data);
+      app.innerHTML=`<section class="card ok-card"><div class="tick">✓</div><h1>¡Listo, ${esc(data.nombre.split(' ')[0])}!</h1>
+        <p class="sub">Recibimos tu registro con ${Object.keys(data.rotaciones).length} rotación(es). Ya puedes cerrar esta página.</p>
+        <button class="btn2" id="again">Enviar otro registro</button></section>`;
+      $('#again').onclick=viewStudent;
+    }catch(e){
+      btn.disabled=false; btn.textContent='Enviar';
+      box.innerHTML='<ul><li>No se pudo enviar. Revisa tu conexión e intenta de nuevo; si el problema sigue, avisa a tu profesor.</li></ul>'; box.hidden=false;
+    }
+  });
+}
+
+/* ---------- vista del profesor ---------- */
+const S={data:{},q:'',filter:'all',unsub:null,unAuth:null};
+function cleanup(){ S.unsub&&S.unsub(); S.unAuth&&S.unAuth(); S.unsub=S.unAuth=null; }
+
+async function viewProf(){
+  app.className='wide'; $('#foot').innerHTML='<a href="#">Ver formulario de estudiantes</a>';
+  app.innerHTML='<p class="sub">Cargando…</p>';
+  let st; try{ st=await initStore(); }catch(e){ app.innerHTML='<div class="errors">No se pudo conectar con Firebase. Revisa la configuración o la conexión.</div>'; return; }
+  S.unAuth=st.auth.onChange(user=>{ S.unsub&&S.unsub(); S.unsub=null; user?panel(st):login(st); });
+}
+function login(st){
+  app.className='';
+  app.innerHTML=`<section class="card" style="max-width:420px;margin:0 auto"><h1>Acceso del profesor</h1><p class="sub">Ingresa con tu cuenta de Firebase.</p>
+    <form id="lf"><label for="em">Correo</label><input type="email" id="em" autocomplete="username" required>
+    <label for="pw" style="margin-top:12px">Contraseña</label><input type="password" id="pw" autocomplete="current-password" required>
+    <div id="le" class="errors" hidden></div>
+    <button class="btn" style="width:100%;margin-top:16px">Entrar</button></form></section>`;
+  $('#lf').onsubmit=async e=>{
+    e.preventDefault();
+    try{ await st.auth.signIn($('#em').value.trim(),$('#pw').value); }
+    catch(err){ const b=$('#le'); b.textContent='Correo o contraseña incorrectos.'; b.hidden=false; }
+  };
+}
+
+function panel(st){
+  app.className='wide';
+  app.innerHTML=`
+  <div class="printonly"><h1>Informe de notas · Rotación de Pediatría</h1><div>Hospital Regional de Zipaquirá · ${new Date().toLocaleDateString('es-CO')}</div></div>
+  ${st.demo?'<div class="banner noprint"><b>Modo demostración:</b> los datos viven solo en este navegador y no los verán tus estudiantes. Configura Firebase para recibir sus respuestas.</div>':''}
+  <div class="stats noprint" id="stats"></div>
+  <div class="toolbar noprint">
+    <input type="text" id="q" placeholder="Buscar nombre, documento o universidad…">
+    <select id="flt"><option value="all">Todos</option><option value="pend">Con notas pendientes</option><option value="done">Con todas las notas</option><option value="dup">Posibles duplicados</option></select>
+    <span class="sp"></span>
+    <button class="btn2 btn-sm" id="bLink">Copiar enlace para estudiantes</button>
+    <button class="btn2 btn-sm" id="bXls">Descargar Excel</button>
+    <button class="btn2 btn-sm" id="bPrint">Imprimir / PDF</button>
+    <button class="btn btn-sm" id="bAdd">+ Agregar estudiante</button>
+    ${st.demo?'':'<button class="link" id="bOut">Salir</button>'}
+  </div>
+  <div class="tablewrap" id="tw"></div>
+  <dialog id="dlg"></dialog>`;
+  $('#q').oninput=e=>{ S.q=e.target.value; renderTable(); };
+  $('#flt').onchange=e=>{ S.filter=e.target.value; renderTable(); };
+  $('#bAdd').onclick=()=>openDlg(st);
+  $('#bPrint').onclick=()=>window.print();
+  $('#bXls').onclick=exportExcel;
+  $('#bLink').onclick=copyLink;
+  const out=$('#bOut'); if(out) out.onclick=()=>st.auth.signOut();
+  const tw=$('#tw');
+  tw.addEventListener('change',e=>{ if(e.target.classList.contains('nota-in')) onNota(st,e.target); });
+  tw.addEventListener('click',e=>{
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    const id=b.closest('tr').dataset.id;
+    if(b.dataset.act==='edit') openDlg(st,id);
+    if(b.dataset.act==='del'){
+      const n=S.data[id]?.nombre||'este estudiante';
+      if(confirm(`¿Eliminar a ${n}? Esta acción no se puede deshacer.`)) st.remove(id).catch(()=>toast('No se pudo eliminar.',1));
+    }
+    if(b.dataset.act==='demo') loadDemo(st);
+  });
+  S.unsub=st.subscribe(d=>{
+    if(JSON.stringify(d)===JSON.stringify(S.data) && $('#tw').children.length) return;
+    S.data=d; renderTable();
+  },err=>{ $('#tw').innerHTML='<div class="empty">Tu cuenta no tiene permiso para ver los datos. Revisa que el UID en las reglas de Firebase sea el tuyo.</div>'; });
+}
+
+function dupIds(){
+  const m={}; for(const [id,e] of Object.entries(S.data)){ (m[e.documento]=m[e.documento]||[]).push(id); }
+  const s=new Set(); Object.values(m).forEach(a=>{ if(a.length>1) a.forEach(i=>s.add(i)); }); return s;
+}
+function renderStats(){
+  const all=Object.values(S.data).map(calc);
+  const comp=all.filter(c=>c.complete).length, pend=all.filter(c=>c.done>0&&!c.complete).length;
+  $('#stats').innerHTML=`<div class="chip"><b>${all.length}</b>estudiantes</div><div class="chip"><b style="color:var(--ok)">${comp}</b>con todas las notas</div><div class="chip"><b style="color:var(--warn)">${pend}</b>con notas pendientes</div>`;
+}
+function renderTable(){
+  renderStats();
+  const dups=dupIds(), q=norm(S.q);
+  let rows=Object.entries(S.data).filter(([id,e])=>{
+    if(q && !norm(`${e.nombre} ${e.documento} ${e.universidad}`).includes(q)) return false;
+    const c=calc(e);
+    if(S.filter==='pend') return !c.complete;
+    if(S.filter==='done') return c.complete;
+    if(S.filter==='dup') return dups.has(id);
+    return true;
+  }).sort((a,b)=>a[1].nombre.localeCompare(b[1].nombre,'es'));
+  if(!rows.length){
+    const none=!Object.keys(S.data).length;
+    $('#tw').innerHTML=`<div class="empty">${none?'Aún no hay estudiantes registrados.':'Ningún estudiante coincide con el filtro.'}${none&&DEMO?'<br><br><button class="btn2 btn-sm" data-act="demo" type="button">Cargar datos de ejemplo</button>':''}</div>`;
+    return;
+  }
+  $('#tw').innerHTML=`<table><thead><tr><th>#</th><th>Estudiante</th>${ROTS.map(x=>`<th class="c">${x.label}</th>`).join('')}<th class="c">Promedio</th><th class="noprint"></th></tr></thead><tbody>
+  ${rows.map(([id,e],i)=>{
+    const r=e.rotaciones||{};
+    return `<tr data-id="${esc(id)}"><td>${i+1}</td>
+      <td class="who"><b>${esc(e.nombre)}${dups.has(id)?'<span class="dup" title="Hay otro registro con el mismo documento">duplicado</span>':''}</b><small>${esc(e.documento)} · ${esc(e.universidad)} · ${esc(e.periodo)}</small></td>
+      ${ROTS.map(x=>{ const o=r[x.key]; return o?`<td class="c"><input class="nota-in" type="text" inputmode="decimal" data-rot="${x.key}" value="${typeof o.nota==='number'?fmtNum(o.nota):''}" placeholder="—" aria-label="Nota de ${esc(e.nombre)} en ${x.label}"><span class="dates">${fmtDate(o.inicio)} – ${fmtDate(o.fin)}</span></td>`:'<td class="c na">—</td>'; }).join('')}
+      <td class="avg">${avgHTML(calc(e))}</td>
+      <td class="noprint" style="white-space:nowrap"><button class="link" data-act="edit">Editar</button><button class="link red" data-act="del">Eliminar</button></td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+async function onNota(st,inp){
+  const tr=inp.closest('tr'), id=tr.dataset.id, rot=inp.dataset.rot, e=S.data[id];
+  const n=parseNota(inp.value);
+  if(Number.isNaN(n)){ toast('La nota debe estar entre 0 y 5 (ej. 4,3).',1); const o=e.rotaciones[rot].nota; inp.value=typeof o==='number'?fmtNum(o):''; return; }
+  const prev=e.rotaciones[rot].nota;
+  if(n==null) delete e.rotaciones[rot].nota; else e.rotaciones[rot].nota=n;
+  inp.value=n==null?'':fmtNum(n);
+  $('.avg',tr).innerHTML=avgHTML(calc(e)); renderStats();
+  try{ await st.setNota(id,rot,n); }
+  catch(err){
+    if(prev===undefined) delete e.rotaciones[rot].nota; else e.rotaciones[rot].nota=prev;
+    inp.value=typeof prev==='number'?fmtNum(prev):''; $('.avg',tr).innerHTML=avgHTML(calc(e)); renderStats();
+    toast('No se pudo guardar la nota. Revisa tu conexión.',1);
+  }
+}
+
+/* ---------- diálogo agregar / editar ---------- */
+function openDlg(st,id){
+  const v=id?S.data[id]:{}, dlg=$('#dlg');
+  dlg.innerHTML=`<form novalidate><h1>${id?'Editar estudiante':'Agregar estudiante'}</h1>
+    <p class="sub">${id?'Corrige datos, fechas o notas.':'Útil para estudiantes que ya tienen formato de calificación.'}</p>
+    ${formFields(true,v)}<div id="de" class="errors" hidden></div>
+    <div class="dlg-actions"><button type="button" class="btn2" id="dc">Cancelar</button><button class="btn" id="ds">Guardar</button></div></form>`;
+  const form=$('form',dlg); bindFormFields(form);
+  $('#dc').onclick=()=>dlg.close();
+  form.onsubmit=async ev=>{
+    ev.preventDefault();
+    const {errors,data}=readForm(form,true), box=$('#de');
+    if(errors.length){ box.innerHTML='<ul>'+errors.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>'; box.hidden=false; return; }
+    try{
+      if(id) await st.replace(id,{...data,creado:v.creado??Date.now()}); else await st.create(data);
+      dlg.close(); toast('Guardado.');
+    }catch(err){ box.innerHTML='<ul><li>No se pudo guardar. Revisa tu conexión.</li></ul>'; box.hidden=false; }
+  };
+  dlg.showModal();
+}
+
+/* ---------- exportar ---------- */
+function buildRows(){
+  return Object.values(S.data).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')).map(e=>{
+    const c=calc(e), row={'Nombre':e.nombre,'Documento':e.documento,'Universidad':e.universidad,'Periodo':e.periodo,'Correo':e.correo||''};
+    for(const x of ROTS){ const o=(e.rotaciones||{})[x.key];
+      row['Nota '+x.label]=o&&typeof o.nota==='number'?o.nota:'';
+      row['Inicio '+x.label]=o?fmtDate(o.inicio):''; row['Fin '+x.label]=o?fmtDate(o.fin):''; }
+    row['Rotaciones cursadas']=c.done; row['Notas registradas']=c.graded;
+    row['Promedio']=c.complete?r2(c.avg):''; row['Estado']=c.complete?'Completo':'Faltan notas';
+    return row;
+  });
+}
+function loadXLSX(){
+  return new Promise((res,rej)=>{
+    if(window.XLSX) return res();
+    const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>window.XLSX?res():rej(); s.onerror=rej; document.head.appendChild(s);
+  });
+}
+async function exportExcel(){
+  const rows=buildRows(); if(!rows.length) return toast('No hay datos para exportar.',1);
+  try{
+    await loadXLSX();
+    const ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new();
+    ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length+2,k==='Nombre'?34:12)}));
+    XLSX.utils.book_append_sheet(wb,ws,'Notas'); XLSX.writeFile(wb,'notas-rotacion-pediatria.xlsx');
+  }catch{
+    const keys=Object.keys(rows[0]), cell=v=>`"${String(typeof v==='number'?String(v).replace('.',','):v).replace(/"/g,'""')}"`;
+    const csv='﻿'+[keys.map(cell).join(';'),...rows.map(r=>keys.map(k=>cell(r[k])).join(';'))].join('\r\n');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    a.download='notas-rotacion-pediatria.csv'; a.click(); toast('Se descargó como CSV (no se pudo cargar el generador de Excel).');
+  }
+}
+async function copyLink(){
+  const url=location.href.split('#')[0];
+  try{ await navigator.clipboard.writeText(url); toast('Enlace copiado: '+url); }
+  catch{ toast('Enlace para estudiantes: '+url); }
+}
+async function loadDemo(st){
+  const d=(a,b)=>({inicio:a,fin:b});
+  const ej=[
+    {nombre:'Ejemplo Uno',documento:'1000000001',universidad:UNIS[0],periodo:'2026-2',correo:'',rotaciones:{urgencias:{...d('2026-08-03','2026-08-16'),nota:4.2},hospitalizacion:{...d('2026-08-17','2026-08-30'),nota:3.8},consulta_externa:{...d('2026-08-31','2026-09-13'),nota:4.5},neonatal:{...d('2026-09-14','2026-09-27'),nota:4.0}}},
+    {nombre:'Ejemplo Dos',documento:'1000000002',universidad:UNIS[2],periodo:'2026-2',correo:'',rotaciones:{urgencias:{...d('2026-10-05','2026-10-18'),nota:3.5},neonatal:{...d('2026-10-19','2026-11-01')}}},
+    {nombre:'Ejemplo Tres',documento:'1000000003',universidad:UNIS[1],periodo:'2026-2',correo:'',rotaciones:{hospitalizacion:{...d('2026-10-05','2026-10-18')}}}
+  ];
+  for(const e of ej) await st.create(e);
+}
+
+/* ---------- navegación ---------- */
+function route(){
+  cleanup();
+  if(location.hash==='#profesor') viewProf(); else viewStudent();
+}
+window.addEventListener('hashchange',route);
+route();
+</script>
+</body>
+</html>
